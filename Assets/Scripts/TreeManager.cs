@@ -20,9 +20,10 @@ namespace Orchard
         [SerializeField] private Transform treeCrownTransform;
         [SerializeField] private Transform floorTransform;
         [SerializeField] private float treeCrownReachScale;
+        [SerializeField] private ParticleSystem leavesParticleSystem;
         
         private float fruitTimer = 0.0f;
-        private float nextFruitTime = 0.0f;
+        private float nextFruitTime = 0;
         private List<Fruit> fruits = new List<Fruit>();
         private Vector3 crownSpawnPosition;
 
@@ -32,6 +33,7 @@ namespace Orchard
         // Start is called before the first frame update
         void Start()
         {
+            nextFruitTime = Random.Range(1f, 3f);
             crownSpawnPosition = treeCrownTransform.position;
         }
 
@@ -86,10 +88,14 @@ namespace Orchard
             treeCrownTransform.position = Vector3.Lerp(crownSpawnPosition, target - reachOffset, treeCrownReachScale);
         }
 
-        public void Unreach()
+        public void Unreach(bool detachHappened)
         {
             treeCrownTransform.DOMove(crownSpawnPosition, 0.2f);
             resting = true;
+            if (detachHappened)
+            {
+                leavesParticleSystem.Play();
+            }
         }
         
         // Find a random spot for a new fruit but also make sure it doesn't overlap with existing fruits 

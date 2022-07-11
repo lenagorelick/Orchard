@@ -101,6 +101,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   audioSource: {fileID: 3455765103189509744}
   growSound: {fileID: 8300000, guid: 7dd1763cf4ba8aa45ad87389f9a7569d, type: 3}
+  detachSound: {fileID: 8300000, guid: 740cfa20b5b5c1b4d9fd48308847bcb9, type: 3}
+  fallSound: {fileID: 8300000, guid: 34f3b889b3d164b48b215a09f7a04965, type: 3}
   growDuration: 0.3
   dragSpeed: 20
   detachSpeed: 50

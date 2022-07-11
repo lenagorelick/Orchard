@@ -15,6 +15,8 @@ namespace Orchard
     {
         [SerializeField] private AudioSource audioSource;
         [SerializeField] private AudioClip growSound;
+        [SerializeField] private AudioClip detachSound;
+        [SerializeField] private AudioClip fallSound;
         [SerializeField] private float growDuration = 0.3f;
         
         
@@ -52,29 +54,21 @@ namespace Orchard
             myState = State.Grow;
             transform.localScale = Vector3.zero;
             transform.DOScale(Vector3.one, growDuration).SetEase(Ease.OutBack).OnComplete(delegate { myState = State.Rest; });
-            PlayGrowSound();
+            PlaySound(growSound);
             spawnPosition = transform.position;
 
 
 
         }
 
-        private void PlayGrowSound()
-        {
-            // sound for spawn
-            audioSource.clip = growSound;
-            audioSource.pitch = Random.Range(0.8f, 1.2f);
-            float fromSeconds = Random.Range(0, growSound.length - growDuration);
-            PlaySoundInterval(fromSeconds);
-
-        }
         
-        private void PlaySoundInterval(float fromSeconds)
+        private void PlaySound(AudioClip soundClip)
         {
-            audioSource.time = fromSeconds;
+            // sound for detach
+            audioSource.clip = soundClip;
+            audioSource.pitch = Random.Range(0.8f, 1.2f);
             audioSource.Play();
-            audioSource.SetScheduledEndTime( AudioSettings.dspTime + growDuration);
-            
+
         }
         
         
@@ -107,7 +101,7 @@ namespace Orchard
         {
             transform.DOMove(spawnPosition, 0.2f);
             myState = State.Rest;
-            MyTree.Unreach();
+            MyTree.Unreach(false);
         }
         void OnMouseDrag()
         {
@@ -117,7 +111,7 @@ namespace Orchard
                 if (Vector3.Distance(fruitTargetPosition, spawnPosition) > detachThreshold)
                 {
                     myState = State.Detach;
-                    MyTree.Unreach();
+                    MyTree.Unreach(true);
                 }
             }
 
@@ -128,6 +122,7 @@ namespace Orchard
             }
             if (myState == State.Detach)
             {
+                PlaySound(detachSound);
                 transform.position = Vector3.MoveTowards(transform.position, fruitTargetPosition,
                     detachSpeed * Time.deltaTime);
                 if (Vector3.Distance(fruitTargetPosition, transform.position) < 0.01f)
@@ -198,6 +193,7 @@ namespace Orchard
 
             float direction = Mathf.Sign(Random.Range(-1,1));
             transform.DOMoveX(transform.position.x + 0.7f*direction, 0.4f);
+            PlaySound(fallSound);
 
 
         }
