@@ -16,6 +16,7 @@ namespace Orchard
 
         [SerializeField] private float dragSpeed = 20;
         [SerializeField] private float detachSpeed = 50;
+        [SerializeField] private float fallSpeed = 30;
         [SerializeField] private float detachThreshold = 1;
         [SerializeField] private float shakeRadius = 0.02f;
         
@@ -82,6 +83,7 @@ namespace Orchard
 
         private void OnMouseUp()
         {
+            Debug.Log("mouse up");
             if (myState == State.Shake)
             {
                 myState = State.Rest;
@@ -93,11 +95,12 @@ namespace Orchard
             
         }
 
-        void OnMouseDrag() 
+        void OnMouseDrag()
         {
+            var fruitTargetPosition = GetMousePos() + dragOffset;
             if (myState == State.Shake)
             {
-                if (Vector3.Distance(GetMousePos(), spawnPosition) > detachThreshold)
+                if (Vector3.Distance(fruitTargetPosition, spawnPosition) > detachThreshold)
                 {
                     myState = State.Detach;
                 }
@@ -105,14 +108,14 @@ namespace Orchard
 
             if (myState == State.Drag)
             {
-                transform.position = Vector3.MoveTowards(transform.position, GetMousePos() + dragOffset,
+                transform.position = Vector3.MoveTowards(transform.position, fruitTargetPosition,
                     dragSpeed * Time.deltaTime);
             }
             if (myState == State.Detach)
             {
-                transform.position = Vector3.MoveTowards(transform.position, GetMousePos() + dragOffset,
+                transform.position = Vector3.MoveTowards(transform.position, fruitTargetPosition,
                     detachSpeed * Time.deltaTime);
-                if (Vector3.Distance(GetMousePos(), spawnPosition) < 0.01f)
+                if (Vector3.Distance(fruitTargetPosition, transform.position) < 0.01f)
                 {
                     myState = State.Drag;
                 }
@@ -133,12 +136,27 @@ namespace Orchard
                 Shake();
                 
             }
+
+            if (myState == State.Fall)
+            {
+                Fall();
+
+            }
         }
 
         void Shake()
         {
+            
             var p2 = Random.insideUnitCircle * shakeRadius;
             transform.position = new Vector3(p2.x,p2.y,0)+ spawnPosition;
+        }
+
+        void Fall()
+        {
+            Debug.Log("falling");
+            var p = transform.position;
+            Vector3 fallPosition = new Vector3(p.x, Mathf.NegativeInfinity, p.z);
+            transform.position += fallSpeed * Vector3.down * Time.deltaTime;
         }
 
     }
