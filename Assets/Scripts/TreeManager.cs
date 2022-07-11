@@ -1,7 +1,10 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Timers;
+using DG.Tweening;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace Orchard
 {
@@ -14,16 +17,22 @@ namespace Orchard
         [SerializeField] private GameObject fruitPrefab;
         [SerializeField] private Transform treeCrownCenter;
         [SerializeField] private float treeCrownRadius;
+        [SerializeField] private Transform treeCrownTransform;
+        [SerializeField] private Transform floorTransform;
+        [SerializeField] private float treeCrownReachScale;
         
         private float fruitTimer = 0.0f;
         private float nextFruitTime = 0.0f;
         private List<Fruit> fruits = new List<Fruit>();
-         
+        private Vector3 crownSpawnPosition;
 
+        private bool resting = true;
+
+        private Vector3 reachOffset;
         // Start is called before the first frame update
         void Start()
         {
-
+            crownSpawnPosition = treeCrownTransform.position;
         }
 
         // Update is called once per frame
@@ -52,6 +61,8 @@ namespace Orchard
             
             GameObject newFruitGameObject = Instantiate(fruitPrefab, this.transform);
             Fruit newFruit = newFruitGameObject.GetComponent<Fruit>();
+            newFruit.MyTree = this;
+            newFruit.floorTransform = this.floorTransform;
             var randomPos = RandomPointInCrown(treeCrownCenter.position);
             newFruit.transform.position = randomPos;
             fruits.Add(newFruit);
@@ -65,9 +76,20 @@ namespace Orchard
             // sounds for shake
         }
 
-        private void Sigh()
+        public void Reach(Vector3 target)
         {
-            
+            if (resting)
+            {
+                reachOffset = target - crownSpawnPosition;
+                resting = false;
+            }
+            treeCrownTransform.position = Vector3.Lerp(crownSpawnPosition, target - reachOffset, treeCrownReachScale);
+        }
+
+        public void Unreach()
+        {
+            treeCrownTransform.DOMove(crownSpawnPosition, 0.2f);
+            resting = true;
         }
         
         // Find a random spot for a new fruit but also make sure it doesn't overlap with existing fruits 
@@ -78,10 +100,10 @@ namespace Orchard
             while (attempts<10)
             {
                 attempts++;
-                var p2 = Random.insideUnitCircle * treeCrownRadius;
-                p = new Vector3(p2.x,p2.y,0)+ crownPosition;
+                var p2 = Random.insideUnitCircle * treeCrownRadius * transform.localScale.x;
+                p = new Vector3(p2.x,p2.y,0) + crownPosition;
 
-                if (fruits.Count == 0) 
+                //if (fruits.Count == 0) 
                     return p;
                 
                 var closest = FindClosestFruit(p);
@@ -108,6 +130,11 @@ namespace Orchard
             }
             
             return t;
+        }
+
+        public void Dispawn(Fruit currFruit)
+        {
+            fruits.Remove(currFruit);
         }
     }
 

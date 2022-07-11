@@ -1,7 +1,12 @@
 ﻿using System;
+using System.Numerics;
 using DG.Tweening;
+using Unity.VisualScripting;
 using UnityEngine;
 using Random = UnityEngine.Random;
+using Sequence = DG.Tweening.Sequence;
+using Vector3 = UnityEngine.Vector3;
+
 
 namespace Orchard
 {
@@ -23,7 +28,10 @@ namespace Orchard
 
         private Vector3 dragOffset;
         private Camera cam;
-        
+        public TreeManager MyTree;
+        public Transform floorTransform;
+
+
         enum State
         {
             Grow,
@@ -86,15 +94,21 @@ namespace Orchard
             Debug.Log("mouse up");
             if (myState == State.Shake)
             {
-                myState = State.Rest;
+                Rest();    
             }
-            if (myState == State.Drag)
+            if (myState == State.Drag || myState==State.Detach)
             {
                 myState = State.Fall;
             }
             
         }
 
+        void Rest()
+        {
+            transform.DOMove(spawnPosition, 0.2f);
+            myState = State.Rest;
+            MyTree.Unreach();
+        }
         void OnMouseDrag()
         {
             var fruitTargetPosition = GetMousePos() + dragOffset;
@@ -103,6 +117,7 @@ namespace Orchard
                 if (Vector3.Distance(fruitTargetPosition, spawnPosition) > detachThreshold)
                 {
                     myState = State.Detach;
+                    MyTree.Unreach();
                 }
             }
 
@@ -134,6 +149,7 @@ namespace Orchard
             if (myState == State.Shake)
             {
                 Shake();
+                MyTree.Reach(GetMousePos());
                 
             }
 
@@ -142,22 +158,48 @@ namespace Orchard
                 Fall();
 
             }
+            
+
+        
         }
 
         void Shake()
         {
-            
-            var p2 = Random.insideUnitCircle * shakeRadius;
-            transform.position = new Vector3(p2.x,p2.y,0)+ spawnPosition;
+           
+            float currShakeRadius = shakeRadius * Vector3.Distance(GetMousePos() + dragOffset, spawnPosition)/ detachThreshold;
+            var p2 = Random.insideUnitCircle * currShakeRadius;
+            var d = Vector3.Lerp(spawnPosition, GetMousePos(), 0.2f);
+            transform.position = new Vector3(p2.x,p2.y,0) + d;
         }
 
         void Fall()
         {
-            Debug.Log("falling");
+            
             var p = transform.position;
             Vector3 fallPosition = new Vector3(p.x, Mathf.NegativeInfinity, p.z);
             transform.position += fallSpeed * Vector3.down * Time.deltaTime;
+
+            if (transform.position.y < floorTransform.position.y)
+            {
+                Die();
+            }
+            
         }
 
+        private void Die()
+        {
+            
+            myState = State.Die;
+            MyTree.Dispawn(this);
+            float y = transform.position.y;
+            Sequence sequence =  DOTween.Sequence();
+            sequence.Append(transform.DOMoveY(y+0.7f, 0.2f).SetEase(Ease.OutQuad));
+            sequence.Append(transform.DOMoveY(y, 0.2f).SetEase(Ease.InQuad));
+
+            float direction = Mathf.Sign(Random.Range(-1,1));
+            transform.DOMoveX(transform.position.x + 0.7f*direction, 0.4f);
+
+
+        }
     }
 }
