@@ -74,7 +74,7 @@ SpriteRenderer:
   m_AutoUVMaxAngle: 89
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 1033005447
-  m_SortingLayer: 1
+  m_SortingLayer: 2
   m_SortingOrder: 0
   m_Sprite: {fileID: 21300000, guid: b356bb7778e1fa248a61d541e70edad9, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -102,7 +102,11 @@ MonoBehaviour:
   audioSource: {fileID: 3455765103189509744}
   growSound: {fileID: 8300000, guid: 7dd1763cf4ba8aa45ad87389f9a7569d, type: 3}
   growDuration: 0.3
-  speed: 20
+  dragSpeed: 20
+  detachSpeed: 50
+  fallSpeed: 30
+  detachThreshold: 1
+  shakeRadius: 0.05
 --- !u!61 &220614623104234212
 BoxCollider2D:
   m_ObjectHideFlags: 0
