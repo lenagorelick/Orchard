@@ -100,7 +100,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   audioSource: {fileID: 3459191699329316186}
   growSound: {fileID: 8300000, guid: 7dd1763cf4ba8aa45ad87389f9a7569d, type: 3}
-  growSoundDesiredLength: 1
+  growDuration: 0.3
 --- !u!82 &3459191699329316186
 AudioSource:
   m_ObjectHideFlags: 0

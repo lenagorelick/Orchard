@@ -56,9 +56,9 @@ namespace Orchard
             fruits.Add(newFruit);
             // grow in size
             newFruit.Grow();
-
         }
-
+        
+        
         private void Shake()
         {
             // sounds for shake
@@ -69,13 +69,47 @@ namespace Orchard
             
         }
         
-        public static Vector3 RandomPointInCrown(Bounds colliderBounds) 
+        // Find a random spot for a new fruit but also make sure it doesn't overlap with existing fruits 
+        public Vector3 RandomPointInCrown(Bounds colliderBounds)
         {
-            return new Vector3(
-                Random.Range(colliderBounds.min.x, colliderBounds.max.x),
-                Random.Range(colliderBounds.min.y, colliderBounds.max.y),
-                Random.Range(colliderBounds.min.z, colliderBounds.max.z)
-            );
+            int attempts = 0;
+            Vector3 p = Vector3.zero;
+            while (attempts<10)
+            {
+                attempts++;
+                p = new Vector3(
+                    Random.Range(colliderBounds.min.x, colliderBounds.max.x),
+                    Random.Range(colliderBounds.min.y, colliderBounds.max.y),
+                    Random.Range(colliderBounds.min.z, colliderBounds.max.z)
+                );
+
+                if (fruits.Count == 0) 
+                    return p;
+                
+                var closest = FindClosestFruit(p);
+                if (Vector3.Distance(p, closest.position) > 1)
+                    return p;
+            }
+
+            // This is very unlikely to happen but if we got here just return the last position
+            return p;
+        }
+
+        public Transform FindClosestFruit(Vector3 p)
+        {
+            float minD = float.MaxValue;
+            Transform t = fruits[0].transform;
+            foreach (var fruit in fruits)
+            {
+                float d = Vector3.Distance(fruit.transform.position, p);
+                if (d<minD)
+                {
+                    minD = d;
+                    t = fruit.transform;
+                }
+            }
+            
+            return t;
         }
     }
 

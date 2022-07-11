@@ -24,7 +24,7 @@ namespace Orchard
         {
             // sound for spawn
             audioSource.clip = growSound;
-            audioSource.pitch = Random.Range(0.5f, 1.5f);
+            //audioSource.pitch = Random.Range(0.5f, 1.5f);
             float fromSeconds = Random.Range(0, growSound.length - growDuration);
             PlaySoundInterval(fromSeconds);
 
@@ -32,9 +32,9 @@ namespace Orchard
         
         private void PlaySoundInterval(float fromSeconds)
         {
-            //audioSource.time = fromSeconds;
+            audioSource.time = fromSeconds;
             audioSource.Play();
-            audioSource.SetScheduledEndTime(growDuration);
+            audioSource.SetScheduledEndTime( AudioSettings.dspTime + growDuration);
             
         }
     }
