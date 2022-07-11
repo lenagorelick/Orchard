@@ -1,0 +1,65 @@
+# =============== #
+# Unity generated #
+# =============== #
+Temp/
+Library/
+Builds/
+Build/
+Assets/SampleScenes*
+Assets/LocalTemp/
+Assets/LocalTemp.meta
+Assets/StreamingAssets/ARRecording/
+Assets/StreamingAssets/ARRecording.meta
+Assets/Standard Assets/
+Assets/Plugins/Editor/JetBrains/
+Assets/Plugins/Editor/JetBrains.meta
+Build-1.0-v1.symbols.zip
+**/__/Guides/
+# ===================================== #
+# Visual Studio / MonoDevelop generated #
+# ===================================== #
+ExportedObj/
+obj/
+*.svd
+*.userprefs
+/*.csproj
+*.pidb
+*.suo
+/*.sln
+*.user
+*.unityproj
+*.booproj
+.vs/*
+.idea/
+**/JetBrains
+
+# ============ #
+# OS generated #
+# ============ #
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db*
+Thumbs.db*
+Thumbs.db.meta
+
+# ========= #
+# ScapeKit  #
+# ========= #
+Assets/Resources/ScapeAPIKey*
+tmp.sh
+
+# ========= #
+# Manual    #
+# ========= #
+SampleShots
+Downloads
+Logs
+Recordings
+Build.IOS
+VuforiaSession*
+QCAR
+UserSettings
+Screenshots
