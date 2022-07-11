@@ -232,7 +232,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 33040737}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 3.87, y: 0, z: 0}
+  m_LocalPosition: {x: 3.87, y: 0.12, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -1811,7 +1811,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1537988471}
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 1.4982631, y: 0.036886096, z: 0}
+  m_LocalPosition: {x: 1.4982631, y: 0.06, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2724,7 +2724,12 @@ PrefabInstance:
       propertyPath: m_Name
       value: Tree1
       objectReference: {fileID: 0}
-    m_RemovedComponents: []
+    - target: {fileID: 6183932966845442110, guid: aabf234557f96db49b0dd4c26a91a1ee, type: 3}
+      propertyPath: m_Name
+      value: SpawnCenter
+      objectReference: {fileID: 0}
+    m_RemovedComponents:
+    - {fileID: 8608572705500602669, guid: aabf234557f96db49b0dd4c26a91a1ee, type: 3}
   m_SourcePrefab: {fileID: 100100000, guid: aabf234557f96db49b0dd4c26a91a1ee, type: 3}
 --- !u!1001 &8592311710106351278
 PrefabInstance:

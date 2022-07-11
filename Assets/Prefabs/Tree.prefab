@@ -26,7 +26,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 3855720818272907909}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: -10.151021, y: 1.9400692, z: 0.10237703}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -100,12 +100,11 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maxNumFruits: 5
-  minTimeBetweenSpawn: 1
-  maxTimeBetweenSpawn: 3
+  minTimeBetweenSpawn: 0.5
+  maxTimeBetweenSpawn: 1.5
   fruitPrefab: {fileID: 8592311708825906697, guid: 88401a25d862a094ea5f4ceb7ac5fd8c, type: 3}
-  treeCrownZone: {fileID: 8608572705500602669}
-  audioSource: {fileID: 2376817000597231157}
-  growSound: {fileID: 8300000, guid: 7dd1763cf4ba8aa45ad87389f9a7569d, type: 3}
+  treeCrownCenter: {fileID: 8633725234345657216}
+  treeCrownRadius: 1
 --- !u!82 &2376817000597231157
 AudioSource:
   m_ObjectHideFlags: 0
@@ -213,7 +212,7 @@ GameObject:
   - component: {fileID: 8633725234345657216}
   - component: {fileID: 8608572705500602669}
   m_Layer: 0
-  m_Name: SpawnZone
+  m_Name: SpawnCenter
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -244,7 +243,7 @@ BoxCollider2D:
   m_Enabled: 1
   m_Density: 1
   m_Material: {fileID: 0}
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_UsedByEffector: 0
   m_UsedByComposite: 0
   m_Offset: {x: 0, y: 0}

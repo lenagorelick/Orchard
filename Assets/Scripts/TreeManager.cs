@@ -12,7 +12,8 @@ namespace Orchard
         [SerializeField] private float minTimeBetweenSpawn = 1.0f;
         [SerializeField] private float maxTimeBetweenSpawn = 3.0f;
         [SerializeField] private GameObject fruitPrefab;
-        [SerializeField] private BoxCollider2D treeCrownZone;
+        [SerializeField] private Transform treeCrownCenter;
+        [SerializeField] private float treeCrownRadius;
         
         private float fruitTimer = 0.0f;
         private float nextFruitTime = 0.0f;
@@ -51,7 +52,7 @@ namespace Orchard
             
             GameObject newFruitGameObject = Instantiate(fruitPrefab, this.transform);
             Fruit newFruit = newFruitGameObject.GetComponent<Fruit>();
-            var randomPos = RandomPointInCrown(treeCrownZone.bounds);
+            var randomPos = RandomPointInCrown(treeCrownCenter.position);
             newFruit.transform.position = randomPos;
             fruits.Add(newFruit);
             // grow in size
@@ -70,18 +71,15 @@ namespace Orchard
         }
         
         // Find a random spot for a new fruit but also make sure it doesn't overlap with existing fruits 
-        public Vector3 RandomPointInCrown(Bounds colliderBounds)
+        public Vector3 RandomPointInCrown(Vector3 crownPosition)
         {
             int attempts = 0;
             Vector3 p = Vector3.zero;
             while (attempts<10)
             {
                 attempts++;
-                p = new Vector3(
-                    Random.Range(colliderBounds.min.x, colliderBounds.max.x),
-                    Random.Range(colliderBounds.min.y, colliderBounds.max.y),
-                    Random.Range(colliderBounds.min.z, colliderBounds.max.z)
-                );
+                var p2 = Random.insideUnitCircle * treeCrownRadius;
+                p = new Vector3(p2.x,p2.y,0)+ crownPosition;
 
                 if (fruits.Count == 0) 
                     return p;
