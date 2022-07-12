@@ -112,94 +112,153 @@ namespace Orchard
         /// Spawns a new fruit:
         /// Instantiates a fruit prefab
         /// Keeps ref to its "Fruit" component
-        /// Updates fruit's tree to be this
+        /// Updates fruit's tree ref
         /// Passes floor to fruit
         /// Finds random position for the fruit on the tree
         /// Adds fruit to its list of fruits
         /// Asks fruit to grow
         /// 
         /// </summary>
-        
         private void SpawnFruit()
         {
             
+            // create prefab
             GameObject newFruitGameObject = Instantiate(fruitPrefab, this.transform);
+            // get fruit component
             Fruit newFruit = newFruitGameObject.GetComponent<Fruit>();
+            // updates fruit's tree
             newFruit.MyTree = this;
+            // updates fruits floor
             newFruit.floorTransform = this.floorTransform;
+            // gets random spawn position on the crown
             var randomPos = RandomPointInCrown(fruitSpawnCenter.position);
             newFruit.transform.position = randomPos;
+            // keeps the fruit in the list of fruits
             fruits.Add(newFruit);
-            // grow in size
+            // grow fruit
             newFruit.Grow(fruitSprite, fruitSplashColor);
         }
         
         
-        private void Shake()
-        {
-            // sounds for shake
-        }
-
+       /// <summary>
+       /// The tree reaches after a fruit that is being pulled by a mouse 
+       /// </summary>
+       /// <param name="target"></param>
         public void Reach(Vector3 target)
         {
+            // if the tree was resting - switch off resting
             if (resting)
             {
+                // crown location offset with respect to the mouse
+                // when started reaching
                 reachOffset = target - crownSpawnPosition;
                 resting = false;
             }
+            // interpolate the crown location towards the offset target using the reach scale property
             treeCrownTransform.position = Vector3.Lerp(crownSpawnPosition, target - reachOffset, treeCrownReachScale);
         }
 
+       /// <summary>
+       /// Stop reaching:
+       /// return to resting state
+       /// move to initial spawn location
+       /// if detached - play leaves particle system
+       /// </summary>
+       /// <param name="detachHappened"></param>
         public void Unreach(bool detachHappened)
         {
+            
+            // return to initial spawn location of the tree crown
             treeCrownTransform.DOMove(crownSpawnPosition, 0.2f);
+            // switch to resting
             resting = true;
+            // if fruit detached
             if (detachHappened)
             {
+                // play leaves particle system
                 leavesParticleSystem.Play();
             }
+            
         }
         
-        // Find a random spot for a new fruit but also make sure it doesn't overlap with existing fruits 
+        
+        /// <summary>
+        /// Find a random spot for a new fruit but also make sure it doesn't overlap with existing fruits
+        /// </summary>
+        /// <param name="crownPosition"></param>
+        /// <returns></returns>
         public Vector3 RandomPointInCrown(Vector3 crownPosition)
         {
+            // how many attempts are allowed until the right location is found
             int attempts = 0;
-            Vector3 p = Vector3.zero;
-            while (attempts<10)
+            Vector3 randomPointInCrown = Vector3.zero;
+            
+            // while there are still attempts
+            while (attempts < 10)
             {
                 attempts++;
+                // get random location in a unit circle scaled by radius of the crown and local scale of the tree
                 var p2 = Random.insideUnitCircle * treeCrownRadius * transform.localScale.x;
-                p = new Vector3(p2.x,p2.y,0) + crownPosition;
+                randomPointInCrown = new Vector3(p2.x,p2.y,0) + crownPosition;
 
+                // if not fruits on the tree - no need to check the position
                 if (fruits.Count == 0) 
-                    return p;
+                    return randomPointInCrown;
                 
-                var closest = FindClosestFruit(p);
-                if (Vector3.Distance(p, closest.position) > 1)
-                    return p;
+                // check the distance to the closest fruit on the tree
+                var closestFruitTransform = FindClosestFruit(randomPointInCrown);
+                
+                // if it is far enough
+                if (Vector3.Distance(randomPointInCrown, closestFruitTransform.position) > 1)
+                    return randomPointInCrown;
             }
 
             // This is very unlikely to happen but if we got here just return the last position
-            return p;
+            // there will be an overlap
+            return randomPointInCrown;
         }
 
-        public Transform FindClosestFruit(Vector3 p)
+        /// <summary>
+        /// Find the closest fruit to a given position
+        /// Linear search over the fruits in the list
+        /// Assumes the list is non-empty
+        /// </summary>
+        /// <param name="p"></param>
+        /// <returns></returns>
+        public Transform FindClosestFruit(Vector3 fruitPosition)
         {
+            // if there are not fruits throw exception
+            if (fruits.Count == 0)
+            {
+                throw new Exception("No fruits on the tree");
+            }
+            
+            // min distance so far
             float minD = float.MaxValue;
-            Transform t = fruits[0].transform;
+            Transform closestFruitTransform = fruits[0].transform;
+            
+            // go over the fruits
             foreach (var fruit in fruits)
             {
-                float d = Vector3.Distance(fruit.transform.position, p);
+                // calc distance to given fruit position
+                float d = Vector3.Distance(fruit.transform.position, fruitPosition);
+                
+                // check if that is the closest dist
                 if (d<minD)
                 {
+                    // keep the dist and the transform
                     minD = d;
-                    t = fruit.transform;
+                    closestFruitTransform = fruit.transform;
                 }
             }
             
-            return t;
+            return closestFruitTransform;
         }
 
+        /// <summary>
+        /// Remove the fruit from the tree
+        /// </summary>
+        /// <param name="currFruit"></param>
         public void Dispawn(Fruit currFruit)
         {
             fruits.Remove(currFruit);
