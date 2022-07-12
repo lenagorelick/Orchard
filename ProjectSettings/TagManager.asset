@@ -50,3 +50,6 @@ TagManager:
   - name: Fruits
     uniqueID: 284335341
     locked: 0
+  - name: Interactive
+    uniqueID: 4132489375
+    locked: 0

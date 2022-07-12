@@ -3,6 +3,7 @@ using System.Numerics;
 using DG.Tweening;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.UIElements;
 using Random = UnityEngine.Random;
 using Sequence = DG.Tweening.Sequence;
 using Vector3 = UnityEngine.Vector3;
@@ -13,19 +14,18 @@ namespace Orchard
     
     public class Fruit : MonoBehaviour
     {
+        [Tooltip("Ref to audio source for playing sound effects")]
         [SerializeField] private AudioSource audioSource;
         [SerializeField] private AudioClip growSound;
         [SerializeField] private AudioClip detachSound;
         [SerializeField] private AudioClip fallSound;
         [SerializeField] private float growDuration = 0.3f;
-        
-        
-
         [SerializeField] private float dragSpeed = 20;
         [SerializeField] private float detachSpeed = 50;
         [SerializeField] private float fallSpeed = 30;
         [SerializeField] private float detachThreshold = 1;
         [SerializeField] private float shakeRadius = 0.02f;
+        [SerializeField] private ParticleSystem splashParticleSystem;
         
 
         private Vector3 dragOffset;
@@ -48,7 +48,12 @@ namespace Orchard
         private State myState;
         private Vector3 spawnPosition;
         
-        public void Grow(Sprite fruitSprite)
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="fruitSprite"></param>
+        /// <param name="fruitSplashColor"></param>
+        public void Grow(Sprite fruitSprite, Color fruitSplashColor)
         {
 
             myState = State.Grow;
@@ -57,6 +62,12 @@ namespace Orchard
             PlaySound(growSound);
             spawnPosition = transform.position;
             this.GetComponent<SpriteRenderer>().sprite = fruitSprite;
+            
+            var main = splashParticleSystem.main;
+            main.startColor = fruitSplashColor;
+            // var renderer = splashParticleSystem.GetComponent<Renderer>();
+            // renderer.sortingOrder = (int)Time.time;
+
 
 
 
@@ -80,8 +91,11 @@ namespace Orchard
 
         void OnMouseDown()
         {
-            myState = State.Shake;
-            dragOffset = transform.position - GetMousePos();
+            if (myState == State.Rest)
+            {
+                myState = State.Shake;
+                dragOffset = transform.position - GetMousePos();
+            }
         }
 
         private void OnMouseUp()
@@ -111,8 +125,7 @@ namespace Orchard
             {
                 if (Vector3.Distance(fruitTargetPosition, spawnPosition) > detachThreshold)
                 {
-                    myState = State.Detach;
-                    MyTree.Unreach(true);
+                    Detach();
                 }
             }
 
@@ -133,6 +146,15 @@ namespace Orchard
             }
         }
 
+        private void Detach()
+        {
+            myState = State.Detach;
+            this.GetComponent<SpriteRenderer>().sortingLayerName = "Interactive";
+            // each new interaction is put in front of everything else
+            this.GetComponent<SpriteRenderer>().sortingOrder = (int)Time.time;
+            
+            MyTree.Unreach(true);
+        }
         Vector3 GetMousePos() 
         {
             var mousePos = cam.ScreenToWorldPoint(Input.mousePosition);
@@ -184,7 +206,8 @@ namespace Orchard
 
         private void Die()
         {
-            
+            splashParticleSystem.transform.parent = null;
+            splashParticleSystem.Play();
             myState = State.Die;
             MyTree.Dispawn(this);
             float y = transform.position.y;
@@ -195,7 +218,9 @@ namespace Orchard
             float direction = Mathf.Sign(Random.Range(-1,1));
             transform.DOMoveX(transform.position.x + 0.7f*direction, 0.4f);
             PlaySound(fallSound);
-
+            this.GetComponent<SpriteRenderer>().sortingLayerName = "Fruits";
+            
+            
 
         }
     }
