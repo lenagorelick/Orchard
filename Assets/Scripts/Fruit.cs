@@ -221,24 +221,46 @@ namespace Orchard
             }
         }
 
+        /// <summary>
+        /// Detaches fruit from the tree
+        /// Moves fruit into interactive layer, so it is in front of everything else
+        /// Tell tree to stop reaching after the fruit
+        /// </summary>
         private void Detach()
         {
+            
+            // change the state to detach
             myState = State.Detach;
+            // change sprite layer
             this.GetComponent<SpriteRenderer>().sortingLayerName = "Interactive";
             // each new interaction is put in front of everything else
             this.GetComponent<SpriteRenderer>().sortingOrder = (int)Time.time;
-            
+            // stop tree from reaching after the fruit
             MyTree.Unreach(true);
+            
         }
+        
+        /// <summary>
+        /// Get mouse position in world coord
+        /// </summary>
+        /// <returns></returns>
         Vector3 GetMousePos() 
         {
+            
             var mousePos = cam.ScreenToWorldPoint(Input.mousePosition);
             mousePos.z = 0;
             return mousePos;
+            
         }
 
+        /// <summary>
+        /// Every frame do:
+        /// if shake state - fruit keeps shaking and tree keeps reaching
+        /// if fall state - fruit keeps falling
+        /// </summary>
         void Update()
         {
+            // shake
             if (myState == State.Shake)
             {
                 Shake();
@@ -246,22 +268,27 @@ namespace Orchard
                 
             }
 
+            // fall
             if (myState == State.Fall)
             {
                 Fall();
 
             }
-            
-
         
         }
 
+        /// <summary>
+        /// fruit simulates shaking
+        /// </summary>
         void Shake()
         {
            
+            // shake more as the distance between the spawn position and the mouse grows
+            // normalized by detach threshold
             float currShakeRadius = shakeRadius * Vector3.Distance(GetMousePos() + dragOffset, spawnPosition)/ detachThreshold;
             var p2 = Random.insideUnitCircle * currShakeRadius;
             var d = Vector3.Lerp(spawnPosition, GetMousePos(), 0.2f);
+            // shake closer to the mouse
             transform.position = new Vector3(p2.x,p2.y,0) + d;
         }
 
