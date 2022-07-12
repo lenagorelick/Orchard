@@ -283,46 +283,74 @@ namespace Orchard
         void Shake()
         {
            
-            // shake more as the distance between the spawn position and the mouse grows
+            // shake radius is larger as the distance between the spawn position and the mouse grows
             // normalized by detach threshold
             float currShakeRadius = shakeRadius * Vector3.Distance(GetMousePos() + dragOffset, spawnPosition)/ detachThreshold;
+            // shake randomly around within shake radius
             var p2 = Random.insideUnitCircle * currShakeRadius;
+            // shake closer to the mouse - this is vecotr in the direction of the mouse
             var d = Vector3.Lerp(spawnPosition, GetMousePos(), 0.2f);
             // shake closer to the mouse
             transform.position = new Vector3(p2.x,p2.y,0) + d;
+            
         }
 
+        /// <summary>
+        /// Fruit falls down until it hits abstract floor location
+        /// </summary>
         void Fall()
         {
             
+            // calculate the fall target position under the curr fruit position
             var p = transform.position;
             Vector3 fallPosition = new Vector3(p.x, Mathf.NegativeInfinity, p.z);
+            // fall with falling speed
             transform.position += fallSpeed * Vector3.down * Time.deltaTime;
 
+            // check if we reached the height of the floor
             if (transform.position.y < floorTransform.position.y)
             {
+                // fruit "dies"
                 Die();
             }
             
         }
 
+        /// <summary>
+        /// Fruit dies after falling:
+        /// disconnect the particle effect from the fruit, so the effect stays while fruit bounces
+        /// play particle effect
+        /// change state to die
+        /// tell tree to forget about the fruit
+        /// bounce the fruit
+        /// play fall sound
+        /// move the fruit into "fruits" sorting layer
+        /// </summary>
         private void Die()
         {
+            // disconnect the particle system from the parent
             splashParticleSystem.transform.parent = null;
+            // play splash effect
             splashParticleSystem.Play();
+            // change the state of the fruit
             myState = State.Die;
+            // remove fruit from the tree
             MyTree.Dispawn(this);
+            
+            // perform bouncing effect
             float y = transform.position.y;
             Sequence sequence =  DOTween.Sequence();
+            // first bounce up
             sequence.Append(transform.DOMoveY(y+0.7f, 0.2f).SetEase(Ease.OutQuad));
+            // then bounce down
             sequence.Append(transform.DOMoveY(y, 0.2f).SetEase(Ease.InQuad));
-
+            // bounce sideways randomly
             float direction = Mathf.Sign(Random.Range(-1,1));
             transform.DOMoveX(transform.position.x + 0.7f*direction, 0.4f);
+            // play sound
             PlaySound(fallSound);
+            // this fruit goes back to "Fruits" sorting level
             this.GetComponent<SpriteRenderer>().sortingLayerName = "Fruits";
-            
-            
 
         }
     }
