@@ -112,7 +112,7 @@ namespace Orchard
                 var p2 = Random.insideUnitCircle * treeCrownRadius * transform.localScale.x;
                 p = new Vector3(p2.x,p2.y,0) + crownPosition;
 
-                //if (fruits.Count == 0) 
+                if (fruits.Count == 0) 
                     return p;
                 
                 var closest = FindClosestFruit(p);
