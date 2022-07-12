@@ -48,7 +48,7 @@ namespace Orchard
         private State myState;
         private Vector3 spawnPosition;
         
-        public void Grow()
+        public void Grow(Sprite fruitSprite)
         {
 
             myState = State.Grow;
@@ -56,6 +56,7 @@ namespace Orchard
             transform.DOScale(Vector3.one, growDuration).SetEase(Ease.OutBack).OnComplete(delegate { myState = State.Rest; });
             PlaySound(growSound);
             spawnPosition = transform.position;
+            this.GetComponent<SpriteRenderer>().sprite = fruitSprite;
 
 
 

@@ -21,6 +21,9 @@ namespace Orchard
         [SerializeField] private Transform floorTransform;
         [SerializeField] private float treeCrownReachScale;
         [SerializeField] private ParticleSystem leavesParticleSystem;
+        [SerializeField] private Sprite fruitSprite;
+        
+        
         
         private float fruitTimer = 0.0f;
         private float nextFruitTime = 0;
@@ -69,7 +72,7 @@ namespace Orchard
             newFruit.transform.position = randomPos;
             fruits.Add(newFruit);
             // grow in size
-            newFruit.Grow();
+            newFruit.Grow(fruitSprite);
         }
         
         

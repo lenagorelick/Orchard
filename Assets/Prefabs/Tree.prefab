@@ -59,6 +59,7 @@ MonoBehaviour:
   floorTransform: {fileID: 0}
   treeCrownReachScale: 0.1
   leavesParticleSystem: {fileID: 4899540323935505572}
+  fruitSprite: {fileID: 21300000, guid: 85885dcb047212a46b5ce5bc69a7bca1, type: 3}
 --- !u!82 &2376817000597231157
 AudioSource:
   m_ObjectHideFlags: 0
