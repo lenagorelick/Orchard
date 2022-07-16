@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using System.Numerics;
 using DG.Tweening;
 using Unity.VisualScripting;
@@ -45,12 +47,14 @@ namespace Orchard
         [Tooltip("Strength of shake when detaching from tree.")]
         [SerializeField] private float shakeRadius = 0.02f;
         
-        [Tooltip("Reference to splash particle system")]
-        [SerializeField] private ParticleSystem splashParticleSystem;
+        [Tooltip("Reference to splash particle system prefab")]
+        [SerializeField] private GameObject splashParticleSystemPrefab;
+        
+        
         
 
         // ref to the tree that holds the fruit
-        public TreeManager MyTree;
+        public FruitContainer myContainer;
         // ref to the location of the floor
         public Transform floorTransform;
         
@@ -59,23 +63,39 @@ namespace Orchard
         // ref to camera
         private Camera cam;
         // ref to fruit spawning position
-        private Vector3 spawnPosition;
+        private Vector3 restPosition;
+        
+        // ref to the splash color 
+        private Color splashColor;
+
+        
+        
+        
+        
 
 
         // states of a fruit - fruit life cycle
         enum State
         {
+            None, 
             Grow,
             Rest,
             Shake,
             Detach,
             Drag,
             Fall,
-            Die
+            Bouncing,
+            OnFloor
         }
         // fruit state
-        private State myState;
-        
+        private State myState = State.None;
+
+       
+        void setState(State newState)
+        {
+            //Debug.Log("Moving from " + myState + " to " + newState);
+            myState = newState;
+        }
         
         /// <summary>
         /// Grows the fruit gradually:
@@ -89,26 +109,25 @@ namespace Orchard
         public void Grow(Sprite fruitSprite, Color fruitSplashColor)
         {
 
+            //Debug.Log("Grow");
             // change state
-            myState = State.Grow;
+            setState(State.Grow);
            
             // assign sprite
             this.GetComponent<SpriteRenderer>().sprite = fruitSprite;
             
             // gradually change the scale of fruit
             transform.localScale = Vector3.zero;
-            transform.DOScale(Vector3.one, growDuration).SetEase(Ease.OutBack).OnComplete(delegate { myState = State.Rest; });
+            transform.DOScale(Vector3.one, growDuration).SetEase(Ease.OutBack).OnComplete(delegate { setState(State.Rest); });
             
             // play grow sound
             PlaySound(growSound);
             
             // remember spawn position
-            spawnPosition = transform.position;
-            
-            // assign color to the splash particle system
-            var main = splashParticleSystem.main;
-            main.startColor = fruitSplashColor;
+            restPosition = transform.position;
 
+            splashColor = fruitSplashColor;
+            
         }
 
         /// <summary>
@@ -142,12 +161,17 @@ namespace Orchard
         /// </summary>
         void OnMouseDown()
         {
-            
+            //Debug.Log("Mouse Down " + myState);
             // if fruit is resting on the tree
             if (myState == State.Rest)
             {
-                myState = State.Shake;
+                setState(State.Shake);
                 dragOffset = transform.position - GetMousePos();
+            }
+
+            if (myState == State.OnFloor)
+            {
+                setState(State.Drag);
             }
             
         }
@@ -167,9 +191,9 @@ namespace Orchard
             }
             
             // if the state is drag or detach, start falling
-            if (myState == State.Drag || myState==State.Detach)
+            if (myState == State.Drag || myState == State.Detach)
             {
-                myState = State.Fall;
+                setState(State.Fall);
             }
             
         }
@@ -182,13 +206,13 @@ namespace Orchard
         {
             
             // gradually move fruit back to its original location
-            transform.DOMove(spawnPosition, 0.2f);
+            transform.DOMove(restPosition, 0.2f);
             
             // change the state to rest
-            myState = State.Rest;
+            setState(State.Rest);
             
             // tell the tree to stop reaching
-            MyTree.Unreach(false);
+            myContainer.Unreach(false);
             
         }
         
@@ -204,7 +228,7 @@ namespace Orchard
             if (myState == State.Shake)
             {
                 // check the distance whether it is time to detach
-                if (Vector3.Distance(fruitTargetPosition, spawnPosition) > detachThreshold)
+                if (Vector3.Distance(fruitTargetPosition, restPosition) > detachThreshold)
                 {
                     Detach();
                 }
@@ -214,8 +238,8 @@ namespace Orchard
             if (myState == State.Drag)
             {
                 // keep dragging after the mouse gradually with drag speed
-                transform.position = Vector3.MoveTowards(transform.position, fruitTargetPosition,
-                    dragSpeed * Time.deltaTime);
+                transform.position = Vector3.MoveTowards(transform.position, fruitTargetPosition,dragSpeed * Time.deltaTime);
+
             }
             
             
@@ -233,7 +257,7 @@ namespace Orchard
                 if (Vector3.Distance(fruitTargetPosition, transform.position) < 0.01f)
                 {
                     // change the state to drag (that will affect its speed)
-                    myState = State.Drag;
+                    setState(State.Drag);
                 }
             }
         }
@@ -247,7 +271,7 @@ namespace Orchard
         {
             
             // change the state to detach
-            myState = State.Detach;
+            setState(State.Detach);
            
             // change sprite layer
             this.GetComponent<SpriteRenderer>().sortingLayerName = "Interactive";
@@ -256,7 +280,7 @@ namespace Orchard
             this.GetComponent<SpriteRenderer>().sortingOrder = (int)Time.time;
            
             // stop tree from reaching after the fruit
-            MyTree.Unreach(true);
+            myContainer.Unreach(true);
             
         }
         
@@ -280,11 +304,13 @@ namespace Orchard
         /// </summary>
         void Update()
         {
+      
+            
             // shake
             if (myState == State.Shake)
             {
                 Shake();
-                MyTree.Reach(GetMousePos());
+                myContainer.Reach(GetMousePos());
                 
             }
 
@@ -294,7 +320,12 @@ namespace Orchard
                 Fall();
 
             }
-        
+
+        }
+
+        private void Drag()
+        {
+            throw new NotImplementedException();
         }
 
         /// <summary>
@@ -305,13 +336,13 @@ namespace Orchard
            
             // shake radius is larger as the distance between the spawn position and the mouse grows
             // normalized by detach threshold
-            float currShakeRadius = shakeRadius * Vector3.Distance(GetMousePos() + dragOffset, spawnPosition)/ detachThreshold;
+            float currShakeRadius = shakeRadius * Vector3.Distance(GetMousePos() + dragOffset, restPosition)/ detachThreshold;
             
             // shake randomly around within shake radius
             var p2 = Random.insideUnitCircle * currShakeRadius;
             
             // shake closer to the mouse - this is vecotr in the direction of the mouse
-            var d = Vector3.Lerp(spawnPosition, GetMousePos(), 0.2f);
+            var d = Vector3.Lerp(restPosition, GetMousePos(), 0.2f);
             
             // shake closer to the mouse
             transform.position = new Vector3(p2.x,p2.y,0) + d;
@@ -324,18 +355,20 @@ namespace Orchard
         void Fall()
         {
             
-            // calculate the fall target position under the curr fruit position
-            var p = transform.position;
-            Vector3 fallPosition = new Vector3(p.x, Mathf.NegativeInfinity, p.z);
-            
             // fall with falling speed
             transform.position += fallSpeed * Vector3.down * Time.deltaTime;
+            //Vector3 avgMomentumVector = momentumQueue.GetAverage();
+            //Debug.DrawLine(transform.position , transform.position + avgMomentumVector * 10f);
+
+            //transform.position += avgMomentumVector*10f;
+            //momentumVector = Vector3.Lerp(avgMomentumVector,Vector3.down, gravityScale);//throwDampening * momentum); 
+            
 
             // check if we reached the height of the floor
             if (transform.position.y < floorTransform.position.y)
             {
                 // fruit "dies"
-                Die();
+                Bounce();
             }
             
         }
@@ -350,19 +383,25 @@ namespace Orchard
         /// play fall sound
         /// move the fruit into "fruits" sorting layer
         /// </summary>
-        private void Die()
+        private void Bounce()
         {
             // disconnect the particle system from the parent
-            splashParticleSystem.transform.parent = null;
+
+            var splash = Instantiate(splashParticleSystemPrefab).GetComponent<ParticleSystem>();
+            splash.transform.position = this.transform.position;
+            // assign color to the splash particle system
+            var main = splash.main;
+            main.startColor = splashColor;
             
-            // play splash effect
-            splashParticleSystem.Play();
             
             // change the state of the fruit
-            myState = State.Die;
+            setState(State.Bouncing);
+            
+            // play splash effect
+            splash.Play();
             
             // remove fruit from the tree
-            MyTree.Dispawn(this);
+            //MyTree.Dispawn(this);
             
             // perform bouncing effect
             float y = transform.position.y;
@@ -375,14 +414,61 @@ namespace Orchard
             
             // bounce sideways randomly in x direction
             float direction = Mathf.Sign(Random.Range(-1,1));
-            transform.DOMoveX(transform.position.x + 0.7f*direction, 0.4f);
+            transform.DOMoveX(transform.position.x + 0.7f*direction, 0.4f)
+                .OnComplete(
+                    delegate 
+                    { 
+                        // change the state of the fruit
+                        setState(State.OnFloor); 
+                        // update spawn position
+                        restPosition = transform.position;
+
+                    });
             
             // play sound
             PlaySound(fallSound);
             
             // this fruit goes back to "Fruits" sorting level
             this.GetComponent<SpriteRenderer>().sortingLayerName = "Fruits";
-
+            
         }
+    }
+}
+
+class MomentumQueue{
+    private Queue<Vector3> _queue;
+    private int _maxSize;
+    public int Count {
+        get {
+            return _queue.Count;
+        }
+    }
+    public MomentumQueue(int maxSize){
+        _maxSize = maxSize;
+        _queue = new Queue<Vector3>();
+    }
+    public void Enqueue(Vector3 v){
+        if(_queue.Count>=_maxSize){
+            _queue.Dequeue();
+        }
+        _queue.Enqueue(v);
+    }
+    public Vector3 Peek(){
+        return _queue.Peek();
+    }
+    public void Clear(){
+        _queue.Clear();
+    }
+
+    public Vector3 GetAverage()
+    {
+        Vector3 avg = Vector3.zero;
+        foreach (var vec in _queue)
+        {
+            avg += vec;
+        }
+
+        Vector3 returnAvg = new Vector3(avg.x / _queue.Count, avg.y / _queue.Count, avg.z / _queue.Count);
+        return avg / (float)_queue.Count;
     }
 }

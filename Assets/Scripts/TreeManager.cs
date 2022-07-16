@@ -11,7 +11,7 @@ using Random = UnityEngine.Random;
 namespace Orchard
 {
 
-    public class TreeManager : MonoBehaviour
+    public class TreeManager : MonoBehaviour, FruitContainer
     {
         [Tooltip("Max number of fruits on a tree.")]
         [SerializeField] private int maxNumFruits = 5;
@@ -92,7 +92,7 @@ namespace Orchard
                 if (fruitTimer > nextFruitTime)
                 {
                     // spawn a fruit                    
-                    SpawnFruit();
+                    ((FruitContainer)this).SpawnFruit();
                     
                     // reset the timer for the next spawn
                     fruitTimer = 0;
@@ -119,7 +119,7 @@ namespace Orchard
         /// Asks fruit to grow
         /// 
         /// </summary>
-        private void SpawnFruit()
+        public void SpawnFruit()
         {
             
             // create prefab
@@ -127,7 +127,7 @@ namespace Orchard
             // get fruit component
             Fruit newFruit = newFruitGameObject.GetComponent<Fruit>();
             // updates fruit's tree
-            newFruit.MyTree = this;
+            newFruit.myContainer = this;
             // updates fruits floor
             newFruit.floorTransform = this.floorTransform;
             // gets random spawn position on the crown
@@ -138,13 +138,14 @@ namespace Orchard
             // grow fruit
             newFruit.Grow(fruitSprite, fruitSplashColor);
         }
-        
-        
-       /// <summary>
+
+
+
+        /// <summary>
        /// The tree reaches after a fruit that is being pulled by a mouse 
        /// </summary>
        /// <param name="target"></param>
-        public void Reach(Vector3 target)
+        void FruitContainer.Reach(Vector3 target)
         {
             // if the tree was resting - switch off resting
             if (resting)
@@ -165,7 +166,7 @@ namespace Orchard
        /// if detached - play leaves particle system
        /// </summary>
        /// <param name="detachHappened"></param>
-        public void Unreach(bool detachHappened)
+        void FruitContainer.Unreach(bool detachHappened)
         {
             
             // return to initial spawn location of the tree crown
@@ -259,10 +260,11 @@ namespace Orchard
         /// Remove the fruit from the tree
         /// </summary>
         /// <param name="currFruit"></param>
-        public void Dispawn(Fruit currFruit)
+        void FruitContainer.RemoveFruit(Fruit currFruit)
         {
             fruits.Remove(currFruit);
         }
+        
     }
 
 }

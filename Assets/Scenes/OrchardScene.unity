@@ -1706,6 +1706,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: Tree2
       objectReference: {fileID: 0}
+    - target: {fileID: 3855720818272907909, guid: aabf234557f96db49b0dd4c26a91a1ee, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 3855720818272907915, guid: aabf234557f96db49b0dd4c26a91a1ee, type: 3}
       propertyPath: m_SortingLayer
       value: 1
@@ -2029,6 +2033,10 @@ PrefabInstance:
     - target: {fileID: 3855720818272907909, guid: aabf234557f96db49b0dd4c26a91a1ee, type: 3}
       propertyPath: m_Name
       value: Tree3
+      objectReference: {fileID: 0}
+    - target: {fileID: 3855720818272907909, guid: aabf234557f96db49b0dd4c26a91a1ee, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 3855720818272907915, guid: aabf234557f96db49b0dd4c26a91a1ee, type: 3}
       propertyPath: m_SortingLayer
@@ -2884,6 +2892,10 @@ PrefabInstance:
     - target: {fileID: 3855720818272907915, guid: aabf234557f96db49b0dd4c26a91a1ee, type: 3}
       propertyPath: m_SortingLayerID
       value: 1151976223
+      objectReference: {fileID: 0}
+    - target: {fileID: 5809030164948033981, guid: aabf234557f96db49b0dd4c26a91a1ee, type: 3}
+      propertyPath: maxNumFruits
+      value: 5
       objectReference: {fileID: 0}
     - target: {fileID: 5809030164948033981, guid: aabf234557f96db49b0dd4c26a91a1ee, type: 3}
       propertyPath: floorTransform
