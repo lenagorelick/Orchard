@@ -8,6 +8,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 using Random = UnityEngine.Random;
 using Sequence = DG.Tweening.Sequence;
+using Timer = System.Timers.Timer;
 using Vector3 = UnityEngine.Vector3;
 
 
@@ -67,6 +68,12 @@ namespace Orchard
         
         // ref to the splash color 
         private Color splashColor;
+
+        private bool mouseDown = false;
+        private Vector3 currDragPosition;
+        private Vector3 prevDragPosition;
+        private Vector3 momentumDir;
+        private float momentumForce;
 
         
         
@@ -151,7 +158,8 @@ namespace Orchard
         {
             
             cam = Camera.main;
-            
+            currDragPosition = transform.position;
+            momentumDir = Vector3.down;
         }
 
         /// <summary>
@@ -161,6 +169,7 @@ namespace Orchard
         /// </summary>
         void OnMouseDown()
         {
+            mouseDown = true;
             //Debug.Log("Mouse Down " + myState);
             // if fruit is resting on the tree
             if (myState == State.Rest)
@@ -183,7 +192,7 @@ namespace Orchard
         /// </summary>
         private void OnMouseUp()
         {
-            
+            mouseDown = false;
             // is the state is shaking, go back to resting on the tree
             if (myState == State.Shake)
             {
@@ -238,7 +247,8 @@ namespace Orchard
             if (myState == State.Drag)
             {
                 // keep dragging after the mouse gradually with drag speed
-                transform.position = Vector3.MoveTowards(transform.position, fruitTargetPosition,dragSpeed * Time.deltaTime);
+                transform.position = fruitTargetPosition;
+                //Vector3.MoveTowards(transform.position, fruitTargetPosition,dragSpeed * Time.deltaTime);
 
             }
             
@@ -250,8 +260,8 @@ namespace Orchard
                 PlaySound(detachSound);
                 
                 // keep dragging after the mouse gradually with fast spring like detach speed
-                transform.position = Vector3.MoveTowards(transform.position, fruitTargetPosition,
-                    detachSpeed * Time.deltaTime);
+                transform.position = fruitTargetPosition;
+                Vector3.MoveTowards(transform.position, fruitTargetPosition, detachSpeed * Time.deltaTime);
                 
                 // if close enough to the mouse 
                 if (Vector3.Distance(fruitTargetPosition, transform.position) < 0.01f)
@@ -281,6 +291,8 @@ namespace Orchard
            
             // stop tree from reaching after the fruit
             myContainer.Unreach(true);
+            
+            myContainer.RemoveFruit(this);
             
         }
         
@@ -318,11 +330,22 @@ namespace Orchard
             if (myState == State.Fall)
             {
                 Fall();
+                momentumDir += Vector3.down * fallSpeed * Time.deltaTime;
+            }
+
+            if (mouseDown)
+            {
+                
+                prevDragPosition = currDragPosition;
+                currDragPosition = transform.position;
+                Vector3 currMomentum = (currDragPosition - prevDragPosition); 
+                momentumDir = Vector3.Lerp(momentumDir,currMomentum, 0.8f);
 
             }
 
         }
 
+        
         private void Drag()
         {
             throw new NotImplementedException();
@@ -356,18 +379,12 @@ namespace Orchard
         {
             
             // fall with falling speed
-            transform.position += fallSpeed * Vector3.down * Time.deltaTime;
-            //Vector3 avgMomentumVector = momentumQueue.GetAverage();
-            //Debug.DrawLine(transform.position , transform.position + avgMomentumVector * 10f);
-
-            //transform.position += avgMomentumVector*10f;
-            //momentumVector = Vector3.Lerp(avgMomentumVector,Vector3.down, gravityScale);//throwDampening * momentum); 
-            
+            transform.position += momentumDir;
 
             // check if we reached the height of the floor
             if (transform.position.y < floorTransform.position.y)
             {
-                // fruit "dies"
+                // fruit "bounces on the floor"
                 Bounce();
             }
             

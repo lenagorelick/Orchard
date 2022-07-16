@@ -88,6 +88,7 @@ namespace Orchard
             // check the number of fruits on the tree
             if (fruits.Count < maxNumFruits)
             {
+                Debug.Log("Not enough fruits on tree ");
                 // check if it is time to spawn a fruit
                 if (fruitTimer > nextFruitTime)
                 {
@@ -262,6 +263,7 @@ namespace Orchard
         /// <param name="currFruit"></param>
         void FruitContainer.RemoveFruit(Fruit currFruit)
         {
+            Debug.Log("Remove from container");
             fruits.Remove(currFruit);
         }
         
