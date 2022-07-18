@@ -170,6 +170,10 @@ namespace Orchard
         void OnMouseDown()
         {
             mouseDown = true;
+            
+            // each new interaction is put in front of everything else
+            this.GetComponent<SpriteRenderer>().sortingOrder = (int)Time.time;
+            
             //Debug.Log("Mouse Down " + myState);
             // if fruit is resting on the tree
             if (myState == State.Rest)
@@ -223,6 +227,9 @@ namespace Orchard
             // tell the tree to stop reaching
             myContainer.Unreach(false);
             
+            // each new interaction is put in front of everything else
+            this.GetComponent<SpriteRenderer>().sortingLayerName = "Fruits";
+            
         }
         
         /// <summary>
@@ -247,8 +254,8 @@ namespace Orchard
             if (myState == State.Drag)
             {
                 // keep dragging after the mouse gradually with drag speed
-                transform.position = fruitTargetPosition;
-                //Vector3.MoveTowards(transform.position, fruitTargetPosition,dragSpeed * Time.deltaTime);
+                //fruitTargetPosition;
+                transform.position = Vector3.MoveTowards(transform.position, fruitTargetPosition,dragSpeed * Time.deltaTime);
 
             }
             
@@ -286,12 +293,10 @@ namespace Orchard
             // change sprite layer
             this.GetComponent<SpriteRenderer>().sortingLayerName = "Interactive";
             
-            // each new interaction is put in front of everything else
-            this.GetComponent<SpriteRenderer>().sortingOrder = (int)Time.time;
-           
             // stop tree from reaching after the fruit
             myContainer.Unreach(true);
             
+            // once the fruit detached the container can forget about it
             myContainer.RemoveFruit(this);
             
         }
@@ -364,7 +369,7 @@ namespace Orchard
             // shake randomly around within shake radius
             var p2 = Random.insideUnitCircle * currShakeRadius;
             
-            // shake closer to the mouse - this is vecotr in the direction of the mouse
+            // shake closer to the mouse - this is vector in the direction of the mouse
             var d = Vector3.Lerp(restPosition, GetMousePos(), 0.2f);
             
             // shake closer to the mouse
@@ -391,10 +396,10 @@ namespace Orchard
         }
 
         /// <summary>
-        /// Fruit dies after falling:
-        /// disconnect the particle effect from the fruit, so the effect stays while fruit bounces
+        /// Fruit bounces after falling:
+        /// spawn splash particle effect, 
         /// play particle effect
-        /// change state to die
+        /// change state to Bounce, once complete to OnFloor
         /// tell tree to forget about the fruit
         /// bounce the fruit
         /// play fall sound
@@ -402,8 +407,8 @@ namespace Orchard
         /// </summary>
         private void Bounce()
         {
-            // disconnect the particle system from the parent
-
+            
+            // spawn the splash particle effect
             var splash = Instantiate(splashParticleSystemPrefab).GetComponent<ParticleSystem>();
             splash.transform.position = this.transform.position;
             // assign color to the splash particle system
@@ -417,9 +422,6 @@ namespace Orchard
             // play splash effect
             splash.Play();
             
-            // remove fruit from the tree
-            //MyTree.Dispawn(this);
-            
             // perform bouncing effect
             float y = transform.position.y;
             // a sequence of motion in y direction
@@ -430,6 +432,7 @@ namespace Orchard
             sequence.Append(transform.DOMoveY(y, 0.2f).SetEase(Ease.InQuad));
             
             // bounce sideways randomly in x direction
+            // once complete change the state to OnFloor
             float direction = Mathf.Sign(Random.Range(-1,1));
             transform.DOMoveX(transform.position.x + 0.7f*direction, 0.4f)
                 .OnComplete(
