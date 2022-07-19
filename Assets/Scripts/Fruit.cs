@@ -5,6 +5,7 @@ using System.Numerics;
 using DG.Tweening;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UIElements;
 using Random = UnityEngine.Random;
 using Sequence = DG.Tweening.Sequence;
@@ -39,8 +40,9 @@ namespace Orchard
         [Tooltip("How fast fruit follows the mouse when dragged.")]
         [SerializeField] private float dragSpeed = 20;
         
+        [FormerlySerializedAs("fallSpeed")]
         [Tooltip("How fast fruit falls.")]
-        [SerializeField] private float fallSpeed = 30;
+        [SerializeField] private float fallGravity = 5;
         
         [Tooltip("Distance between mouse and fruit that causes detachment.")]
         [SerializeField] private float detachThreshold = 1;
@@ -51,13 +53,9 @@ namespace Orchard
         [Tooltip("Reference to splash particle system prefab")]
         [SerializeField] private GameObject splashParticleSystemPrefab;
         
-        
-        
 
         // ref to the tree that holds the fruit
         public FruitContainer myContainer;
-        // ref to the location of the floor
-        public Transform floorTransform;
         
         // fruit offset with respect to mouse click
         private Vector3 dragOffset;
@@ -68,17 +66,15 @@ namespace Orchard
         
         // ref to the splash color 
         private Color splashColor;
-
+        
+        // flag for mouse dragging
         private bool mouseDown = false;
+        // vars for accumulation of momentum
         private Vector3 currDragPosition;
         private Vector3 prevDragPosition;
         private Vector3 momentumDir;
-        private float momentumForce;
+        private bool collidedWithFloor = false;
 
-        
-        
-        
-        
 
 
         // states of a fruit - fruit life cycle
@@ -86,18 +82,41 @@ namespace Orchard
         {
             None, 
             Grow,
-            Rest,
+            Rest, // on tree
             Shake,
-            Detach,
+            Detach, // from the tree
             Drag,
             Fall,
             Bouncing,
-            OnFloor
+            OnFloor // ready to be picked up again
         }
         // fruit state
         private State myState = State.None;
 
-       
+        /// <summary>
+        /// Detect collision for bouncing
+        /// Turn on flag for collision
+        /// </summary>
+        /// <param name="other"></param>
+        private void OnTriggerEnter2D(Collider2D other)
+        {
+            
+            collidedWithFloor = true;
+
+        }
+
+        /// <summary>
+        /// Detect end of collision for bouncing
+        /// Turn off flag for collision
+        /// </summary>
+        /// <param name="other"></param>
+        private void OnTriggerExit2D(Collider2D other)
+        {
+
+            collidedWithFloor = false;
+            
+        }
+
         void setState(State newState)
         {
             //Debug.Log("Moving from " + myState + " to " + newState);
@@ -170,6 +189,9 @@ namespace Orchard
         void OnMouseDown()
         {
             mouseDown = true;
+
+            // change sprite layer
+            this.GetComponent<SpriteRenderer>().sortingLayerName = "Interactive";
             
             // each new interaction is put in front of everything else
             this.GetComponent<SpriteRenderer>().sortingOrder = (int)Time.time;
@@ -185,6 +207,7 @@ namespace Orchard
             if (myState == State.OnFloor)
             {
                 setState(State.Drag);
+                dragOffset = transform.position - GetMousePos();
             }
             
         }
@@ -200,7 +223,7 @@ namespace Orchard
             // is the state is shaking, go back to resting on the tree
             if (myState == State.Shake)
             {
-                Rest();    
+                Rest();
             }
             
             // if the state is drag or detach, start falling
@@ -227,7 +250,7 @@ namespace Orchard
             // tell the tree to stop reaching
             myContainer.Unreach(false);
             
-            // each new interaction is put in front of everything else
+            // return the fruit to the fruits layer
             this.GetComponent<SpriteRenderer>().sortingLayerName = "Fruits";
             
         }
@@ -254,13 +277,13 @@ namespace Orchard
             if (myState == State.Drag)
             {
                 // keep dragging after the mouse gradually with drag speed
-                //fruitTargetPosition;
-                transform.position = Vector3.MoveTowards(transform.position, fruitTargetPosition,dragSpeed * Time.deltaTime);
+                transform.position = fruitTargetPosition;
+                //transform.position = Vector3.MoveTowards(transform.position, fruitTargetPosition,dragSpeed * Time.deltaTime);
 
             }
             
             
-            // if the fruit is detaching
+            // if the fruit is detaching from tree
             if (myState == State.Detach)
             {
                 // play detach sound
@@ -290,9 +313,6 @@ namespace Orchard
             // change the state to detach
             setState(State.Detach);
            
-            // change sprite layer
-            this.GetComponent<SpriteRenderer>().sortingLayerName = "Interactive";
-            
             // stop tree from reaching after the fruit
             myContainer.Unreach(true);
             
@@ -317,9 +337,10 @@ namespace Orchard
         /// <summary>
         /// Every frame do:
         /// if shake state - fruit keeps shaking and tree keeps reaching
-        /// if fall state - fruit keeps falling
+        /// if fall state - fruit keeps falling with momentum
+        /// accumulate momentum
         /// </summary>
-        void Update()
+        void FixedUpdate()
         {
       
             
@@ -335,9 +356,10 @@ namespace Orchard
             if (myState == State.Fall)
             {
                 Fall();
-                momentumDir += Vector3.down * fallSpeed * Time.deltaTime;
+                momentumDir += Vector3.down * fallGravity * Time.deltaTime;
             }
-
+            
+            // this part tracks and accumulates the momentum of the mouse
             if (mouseDown)
             {
                 
@@ -351,11 +373,7 @@ namespace Orchard
         }
 
         
-        private void Drag()
-        {
-            throw new NotImplementedException();
-        }
-
+      
         /// <summary>
         /// fruit simulates shaking
         /// </summary>
@@ -378,20 +396,19 @@ namespace Orchard
         }
 
         /// <summary>
-        /// Fruit falls down until it hits abstract floor location
+        /// Fruit falls down until it hits some floor collider
         /// </summary>
         void Fall()
         {
-            
+            // did we hit the floor?
+            if (collidedWithFloor)
+            {
+                
+                Bounce();
+                return;
+            }
             // fall with falling speed
             transform.position += momentumDir;
-
-            // check if we reached the height of the floor
-            if (transform.position.y < floorTransform.position.y)
-            {
-                // fruit "bounces on the floor"
-                Bounce();
-            }
             
         }
 
@@ -399,8 +416,9 @@ namespace Orchard
         /// Fruit bounces after falling:
         /// spawn splash particle effect, 
         /// play particle effect
-        /// change state to Bounce, once complete to OnFloor
-        /// tell tree to forget about the fruit
+        /// change state to Bounce,
+        /// change state to OnFloor once complete bouncing
+        /// tell container to forget about the fruit
         /// bounce the fruit
         /// play fall sound
         /// move the fruit into "fruits" sorting layer
@@ -414,7 +432,7 @@ namespace Orchard
             // assign color to the splash particle system
             var main = splash.main;
             main.startColor = splashColor;
-            
+
             
             // change the state of the fruit
             setState(State.Bouncing);
@@ -442,53 +460,14 @@ namespace Orchard
                         setState(State.OnFloor); 
                         // update spawn position
                         restPosition = transform.position;
-
+                        // put the fruits back in the fruits layer
+                        this.GetComponent<SpriteRenderer>().sortingLayerName = "Fruits";
+                        Destroy(splash.gameObject);
                     });
             
             // play sound
             PlaySound(fallSound);
             
-            // this fruit goes back to "Fruits" sorting level
-            this.GetComponent<SpriteRenderer>().sortingLayerName = "Fruits";
-            
         }
-    }
-}
-
-class MomentumQueue{
-    private Queue<Vector3> _queue;
-    private int _maxSize;
-    public int Count {
-        get {
-            return _queue.Count;
-        }
-    }
-    public MomentumQueue(int maxSize){
-        _maxSize = maxSize;
-        _queue = new Queue<Vector3>();
-    }
-    public void Enqueue(Vector3 v){
-        if(_queue.Count>=_maxSize){
-            _queue.Dequeue();
-        }
-        _queue.Enqueue(v);
-    }
-    public Vector3 Peek(){
-        return _queue.Peek();
-    }
-    public void Clear(){
-        _queue.Clear();
-    }
-
-    public Vector3 GetAverage()
-    {
-        Vector3 avg = Vector3.zero;
-        foreach (var vec in _queue)
-        {
-            avg += vec;
-        }
-
-        Vector3 returnAvg = new Vector3(avg.x / _queue.Count, avg.y / _queue.Count, avg.z / _queue.Count);
-        return avg / (float)_queue.Count;
     }
 }

@@ -35,9 +35,6 @@ namespace Orchard
         [Tooltip("Ref to the transform of the tree crown sprite.")]
         [SerializeField] private Transform treeCrownTransform;
         
-        [Tooltip("Ref to the transform of the floor in the scene.")]
-        [SerializeField] private Transform floorTransform;
-        
         [Tooltip("Extent of reaching motion after fruits picked from a tree.")]
         [SerializeField] private float treeCrownReachScale;
         
@@ -88,7 +85,7 @@ namespace Orchard
             // check the number of fruits on the tree
             if (fruits.Count < maxNumFruits)
             {
-                Debug.Log("Not enough fruits on tree ");
+
                 // check if it is time to spawn a fruit
                 if (fruitTimer > nextFruitTime)
                 {
@@ -129,8 +126,7 @@ namespace Orchard
             Fruit newFruit = newFruitGameObject.GetComponent<Fruit>();
             // updates fruit's tree
             newFruit.myContainer = this;
-            // updates fruits floor
-            newFruit.floorTransform = this.floorTransform;
+           
             // gets random spawn position on the crown
             var randomPos = RandomPointInCrown(fruitSpawnCenter.position);
             newFruit.transform.position = randomPos;
@@ -263,7 +259,6 @@ namespace Orchard
         /// <param name="currFruit"></param>
         void FruitContainer.RemoveFruit(Fruit currFruit)
         {
-            Debug.Log("Remove from container");
             fruits.Remove(currFruit);
         }
         
