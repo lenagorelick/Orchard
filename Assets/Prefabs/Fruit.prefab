@@ -106,7 +106,7 @@ MonoBehaviour:
   growDuration: 0.3
   detachSpeed: 50
   dragSpeed: 20
-  fallSpeed: 5
+  fallGravity: 2
   detachThreshold: 3
   shakeRadius: 0.05
   splashParticleSystemPrefab: {fileID: 3761839924950483813, guid: efc031b1b72c0f047b68585fb9f88360, type: 3}
